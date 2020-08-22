@@ -1,4 +1,4 @@
-## Project: Control of a 3D Quadrotor
+## Project: Estimation for a 3D Quadrotor
 ![Scenario1_Simulator](./Scenario1_Simulator.png)
 
 ---
@@ -98,7 +98,6 @@ This was done on the QuadControl.cpp file from line 79 to 87.
 ### Flight Evaluation
 #### 1. Your C++ controller is successfully able to fly the provided test trajectory and visually passes inspection of the scenarios leading up to the test trajectory.
 It works!
-
 ####I got this validation on the C++ simulator:
 
 #####Scenario 6
@@ -116,25 +115,21 @@ PASS: ABS(Quad.Est.E.MaxEuler) was less than 0.100000 for at least 3.000000 seco
 
 #####Scenario 8
 
-Simulation #100 (../config/3_PositionControl.txt)
-PASS: ABS(Quad1.Pos.X) was less than 0.100000 for at least 1.250000 seconds
-PASS: ABS(Quad2.Pos.X) was less than 0.100000 for at least 1.250000 seconds
-PASS: ABS(Quad2.Yaw) was less than 0.100000 for at least 1.000000 seconds
+It follow the path
 
 
 #####Scenario 9
 
-Simulation #121 (../config/4_Nonidealities.txt)
-PASS: ABS(Quad1.PosFollowErr) was less than 0.100000 for at least 1.500000 seconds
-PASS: ABS(Quad2.PosFollowErr) was less than 0.100000 for at least 1.500000 seconds
-PASS: ABS(Quad3.PosFollowErr) was less than 0.100000 for at least 1.500000 seconds
+It follows the path but very slow
 
 
 #####Scenario 10
 
-Simulation #130 (../config/5_TrajectoryFollow.txt)
-PASS: ABS(Quad2.PosFollowErr) was less than 0.250000 for at least 3.000000 seconds
+Simulation #3777 (../config/10_MagUpdate.txt)
+FAIL: ABS(Quad.Est.E.Yaw) was less than 0.120000 for 0.000000 seconds, which was less than 10.000000 seconds
+FAIL: ABS(Quad.Est.E.Yaw-0.000000) was less than Quad.Est.S.Yaw for 27% of the time
 
 
-
-
+#####Scenario 11
+Simulation #3782 (../config/11_GPSUpdate.txt)
+FAIL: ABS(Quad.Est.E.Pos) was less than 1.000000 for 0.000000 seconds, which was less than 20.000000 seconds
