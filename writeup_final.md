@@ -1,10 +1,10 @@
-## Project: Estimation for a 3D Quadrotor
+## Project: Building an Estimator
 ![Scenario1_Simulator](./Scenario1_Simulator.png)
 
 ---
 
 
-## [Rubric](https://review.udacity.com/#!/rubrics/1643/view) Points
+## [Rubric](https://review.udacity.com/#!/rubrics/1807/view) Points
 ### Here I will consider the rubric points individually and describe how I addressed each point in my implementation.  
 
 ---
@@ -14,122 +14,131 @@
 
 You're reading it! Below I describe how I addressed each rubric point and where in my code each point is handled.
 
-### Implemented Controller General
+### Implement Estimator
 
-#### 1. Implemented controller in C++.
-These scripts contain a basic controller implementation that includes the following:
-
-1) Introduction (scenario 1):
-
-In this scenario it is required to make the drone hover less than a second by adjusting the mass of the drone on the QuadControlParams.txt file.
-
-[Scenario1_Simulator.mp4](./Scenario1_Simulator.mp4)
+#### 1. Implemented estimator introduction
 
 
-2) Body rate and roll/pitch control (scenario 2):
+1) Step 1: Sensor Noise:
 
-In this scenario it is required to implement the GenerateMotorCommands(), BodyRateControl() and RollPitchControl() functions. It is also require to tune the kpPQR and kpBank parameters using the QuadControlParams.txt file and the .\FCND-Controls-CPP\project\Simulator.sln provided.
+In this scenario it is required to use the simulator to generate GPS and IMU measurements.
 
-
-[Scenario2_Simulator.mp4](./Scenario2_Simulator.mp4)
-
-
-3)Position/velocity and yaw angle control (scenario 3):
-
-In this scenario it is required to implement the LateralPositionControl(), AltitudeControl() and YawControl() functions. It is also require to tune the kpPosZ, KiPosZ, kpVelXY, kpVelZ, kpYaw and kpPQR {3rd (z) component} parameters using the QuadControlParams.txt file and the .\FCND-Controls-CPP\project\Simulator.sln provided.
+[Step1_Simulator.mp4](./Step1_Simulator.mp4)
 
 
-[Scenario3_Simulator.mp4](./Scenario3_Simulator.mp4)
+2) Step 2: Attitude Estimation:
+
+In this scenario it is required to include IMU information into the state.
 
 
-4)Non-idealities and robustness (scenario 4):
-
-In this scenario it is required to edit the AltitudeControl() function to add integral control to our controller (PID). It is also require to tune various parameters using the QuadControlParams.txt file and the .\FCND-Controls-CPP\project\Simulator.sln provided.
-
-[Scenario4_Simulator.mp4](./Scenario4_Simulator.mp4)
+[Step2_Simulator.mp4](./Step2_Simulator.mp4)
 
 
-5)Tracking trajectories (scenario 5):
+3) Step 3: Prediction Step:
 
-In this scenario it is require to tune various parameters using the QuadControlParams.txt file and the .\FCND-Controls-CPP\project\Simulator.sln provided. Thus, your drone follow the trayectory.
-
-[Scenario5_Simulator.mp4](./Scenario5_Simulator.mp4)
+In this scenario it is required to use accelaration measurement to predict the estate. In addition, it is required to update the covariance matrix and complete the EKF state.
 
 
-### Implemented Controller
-
-#### 1. Implemented body rate control in C++
-The controller should be a proportional controller on body rates to commanded moments. The controller should take into account the moments of inertia of the drone when calculating the commanded moments.
-
-On the QuadControl.cpp file, from line 112 to 116 the body rate control is implemented as a proportional controllers that commands moments using the momenta of inertia.
+[Step3_Simulator.mp4](./Step3_Simulator.mp4)
 
 
-#### 2. Implement roll pitch control in C++
-The controller should use the acceleration and thrust commands, in addition to the vehicle attitude to output a body rate command. The controller should account for the non-linear transformation from local accelerations to body rates. Note that the drone's mass should be accounted for when calculating the target angles.
-
-Using the accelearation, thrust command and vehicle attitude, it was determine the body rate command from line 147 to 165 of the QuadControl.cpp file.
+Covariance prediction:
+[Step3.1_Simulator.mp4](./Step3.1_Simulator.mp4)
 
 
-#### 3. Implement altitude controller in C++
-The controller should use both the down position and the down velocity to command thrust. Ensure that the output value is indeed thrust (the drone's mass needs to be accounted for) and that the thrust includes the non-linear effects from non-zero roll/pitch angles. Additionally, the C++ altitude controller should contain an integrator to handle the weight non-idealities presented in scenario 4.
+4) Step 4: Magnetometer Update:
 
-The altitude controller was implemented between line 197 and 212 of the of the QuadControl.cpp file.
+In this scenario it is required to use magnetometer measurement to predict the estate. 
 
-
-#### 4. Implement lateral position control in C++
-The controller should use the local NE position and velocity to generate a commanded local acceleration.
-
-From line 250 to 257, the lateral position controller was implemented in order to generate the commanded local acceleration.
+[Step4_Simulator.mp4](./Step4_Simulator.mp4)
 
 
-#### 5. Implement yaw control in C++
-The controller can be a linear/proportional heading controller to yaw rate commands (non-linear transformation not required).
+5)Step 5: Closed Loop + GPS Update:
 
-In order to include yaw control the lines of code from 280 to 282 were implmented. Refer to the QuadControl.cpp file.
+In this scenario it is required to use GPS measurement to predict the estate. The drone follows the square trayectory.
+
+[Step5_Simulator.mp4](./Step5_Simulator.mp4)
 
 
-#### 6. Implement calculating the motor commands given commanded thrust and moments in C++
-The thrust and moments should be converted to the appropriate 4 different desired thrust forces for the moments. Ensure that the dimensions of the drone are properly accounted for when calculating thrust from moments.
+### Implemented Estimator
+These scripts contain a basic estimator implementation that includes the following:
 
-This was done on the QuadControl.cpp file from line 79 to 87.
+#### 1. Determine the standard deviation of the measurement noise of both GPS X data and Accelerometer X data.
+The calculated standard deviation should correctly capture ~68% of the sensor measurements. Your writeup should describe the method used for determining the standard deviation given the simulated sensor measurements.
+
+I transferred the data of files Graph1.txt and Graph2.txt located at the config/log folder into a spreadsheet and used the in-built formula to calculate the stadard deviations, results are below:
+
+MeasuredStdDev_GPSPosXY = 0.71279695
+MeasuredStdDev_AccelXY = 0.4905941014
+
+
+
+#### 2. Implement a better rate gyro attitude integration scheme in the UpdateFromIMU() function.
+The improved integration scheme should result in an attitude estimator of < 0.1 rad for each of the Euler angles for a duration of at least 3 seconds during the simulation. The integration scheme should use quaternions to improve performance over the current simple integration scheme.
+
+On the QuadEstimatorEKF.cpp file, from line 104 to 112 an improved rate gyro attitude integration scheme was implemented.
+
+
+#### 3. Implement all of the elements of the prediction step for the estimator.
+The prediction step should include the state update element (PredictState() function), a correct calculation of the Rgb prime matrix, and a proper update of the state covariance. The acceleration should be accounted for as a command in the calculation of gPrime. The covariance update should follow the classic EKF update equation.
+
+The prediction step for the estimator was implemented between line 176 and 184 (PredictState), line 212 and 226 (GetRbgPrime) and line 273 and 281 (Predict) of the of the QuadEstimatorEKF.cpp file.
+
+
+#### 4. Implement the magnetometer update.
+The update should properly include the magnetometer data into the state. Note that the solution should make sure to correctly measure the angle error between the current state and the magnetometer value (error should be the short way around, not the long way).
+
+From line 334 to 345, the magnetometer update was implemented.
+
+
+#### 5. Implement the GPS update.
+The estimator should correctly incorporate the GPS information to update the current state estimate.
+
+In order to include GPS information the lines of code from 307 to 311 were implmented. Refer to the QuadEstimatorEKF.cpp file.
 
 
 
 ### Flight Evaluation
-#### 1. Your C++ controller is successfully able to fly the provided test trajectory and visually passes inspection of the scenarios leading up to the test trajectory.
+#### 1. Meet the performance criteria of each step.
+
 It works!
+
 ####I got this validation on the C++ simulator:
 
-#####Scenario 6
+#####Step 1: Sensor Noise
 
-Simulation #1543 (../config/06_SensorNoise.txt)
+Simulation #741 (../config/06_SensorNoise.txt)
 PASS: ABS(Quad.GPS.X-Quad.Pos.X) was less than MeasuredStdDev_GPSPosXY for 71% of the time
 PASS: ABS(Quad.IMU.AX-0.000000) was less than MeasuredStdDev_AccelXY for 68% of the time
 
 
-#####Scenario 7
+#####Step 2: Attitude Estimation
 
-Simulation #2333 (../config/07_AttitudeEstimation.txt)
+Simulation #745 (../config/07_AttitudeEstimation.txt)
 PASS: ABS(Quad.Est.E.MaxEuler) was less than 0.100000 for at least 3.000000 seconds
 
 
-#####Scenario 8
+#####Step 3: Prediction Step
 
-It follow the path
-
-
-#####Scenario 9
-
-It follows the path but very slow
+It follows the path. Refer to video: Step3_Simulator.mp4
 
 
-#####Scenario 10
+#####Step 4: Magnetometer Update
 
-Simulation #3777 (../config/10_MagUpdate.txt)
-FAIL: ABS(Quad.Est.E.Yaw) was less than 0.120000 for 0.000000 seconds, which was less than 10.000000 seconds
-FAIL: ABS(Quad.Est.E.Yaw-0.000000) was less than Quad.Est.S.Yaw for 27% of the time
+Simulation #821 (../config/10_MagUpdate.txt)
+PASS: ABS(Quad.Est.E.Yaw) was less than 0.120000 for at least 10.000000 seconds
+PASS: ABS(Quad.Est.E.Yaw-0.000000) was less than Quad.Est.S.Yaw for 78% of the time
 
 
-#####Scenario 11
-Simulation #3782 (../config/11_GPSUpdate.txt)
-FAIL: ABS(Quad.Est.E.Pos) was less than 1.000000 for 0.000000 seconds, which was less than 20.000000 seconds
+#####Step 5: Closed Loop + GPS Update
+
+Simulation #823 (../config/11_GPSUpdate.txt)
+PASS: ABS(Quad.Est.E.Pos) was less than 1.000000 for at least 20.000000 seconds
+
+
+#### 2. De-tune your controller to successfully fly the final desired box trajectory with your estimator and realistic sensors.
+
+#####Step 6: Adding Your Controller
+
+Everything worked after tuning it. Videos can be seen above and attached.
+
